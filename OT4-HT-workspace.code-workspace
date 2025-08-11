@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "firmware/OT4-HT-display-firmware"
+		},
+		{
+			"path": "firmware/OT4-HT-theremin-firmware"
+		},
+		{
+			"path": "."
+		}
+	]
+}

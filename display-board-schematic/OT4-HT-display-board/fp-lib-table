@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ot-ht")(type "KiCad")(uri "${KIPRJMOD}/ot-ht.pretty")(options "")(descr ""))
+)
