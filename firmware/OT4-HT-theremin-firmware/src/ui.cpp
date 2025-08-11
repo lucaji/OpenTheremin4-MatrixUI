@@ -35,74 +35,62 @@ int16_t volumePotValue = 0, volumePotValueL = 0;
 int16_t registerPotValue = 0, registerPotValueL = 0;
 int16_t wavePotValue = 0, wavePotValueL = 0;
 uint8_t registerValue = 2; // octave register
+uint8_t registerValueL = 2; // octave register old value
 
-
-void ui_poti_read_pitch() {
+/**
+ * @brief Read all the potentiometer position and update the changed values
+ *        if the hysteresis constant have been surpassed.
+ * 
+ * @param force
+ *        optional boolean flag to force the updates (at power-on)
+ */
+void ui_potis_read_all(bool force = false) {
     pitchPotValueL = analogRead(PITCH_POT);
-    if (abs(pitchPotValue - pitchPotValueL) >= pot_rf_virtual_field_adjust_hysteresis) { 
+    if (force || abs(pitchPotValue - pitchPotValueL) >= pot_rf_virtual_field_adjust_hysteresis) { 
         pitchPotValue = pitchPotValueL;
     }
-}
-
-void ui_poti_read_vol() {
+    
     volumePotValueL = analogRead(VOLUME_POT);
-    if (abs(volumePotValue - volumePotValueL) >= pot_rf_virtual_field_adjust_hysteresis) { 
+    if (force || abs(volumePotValue - volumePotValueL) >= pot_rf_virtual_field_adjust_hysteresis) { 
         volumePotValue = volumePotValueL;
     }
-}
 
-void ui_poti_read_register() {
     registerPotValueL = analogRead(REGISTER_SELECT_POT);
-    if (abs(registerPotValue - registerPotValueL) >= pot_register_selection_hysteresis) { 
+    if (force || abs(registerPotValue - registerPotValueL) >= pot_register_selection_hysteresis) { 
         registerPotValue = registerPotValueL;
         // register pot offset configuration:
         // Left = -1 octave, Center = 0, Right = +1 octave
-        uint8_t reg = 0;
         if (registerPotValue > pot_register_selection_hysteresis * 2) {
-            Serial.write(STATE_CMD_REGISTER_HIGH);
-            reg = 1;
+            registerValueL = 1;
             DEBUG_PRINTLN(F("OCT+1"));
         } else if (registerPotValue < pot_register_selection_hysteresis) {
-            Serial.write(STATE_CMD_REGISTER_LOW);
-            reg = 3;
+            registerValueL = 3;
             DEBUG_PRINTLN(F("OCT-1"));
         } else {
-            Serial.write(STATE_CMD_REGISTER_MID);
-            reg = 2;
+            registerValueL = 2;
             DEBUG_PRINTLN(F("OCT+0"));
         }
-        if (reg != registerValue) {
-            registerValue = reg;
-        }
+        if (registerValueL != registerValue) {
+        registerValue = registerValueL;
     }
-}
+    }
 
-void ui_poti_read_waveform() {
     wavePotValueL = analogRead(WAVE_SELECT_POT);
-    if (abs(wavePotValue - wavePotValueL) >= pot_waveform_selection_hysteresis) {
+    if (force || abs(wavePotValue - wavePotValueL) >= pot_waveform_selection_hysteresis) {
         wavePotValue = wavePotValueL;
         // map 0–1023 to 0–(num_wavetables - 1)
         uint16_t scaled = ((uint32_t)wavePotValue * num_wavetables) / 1024;
         if (scaled >= num_wavetables) scaled = num_wavetables - 1;    // extra safety
         if (scaled != vWavetableSelector) {
             vWavetableSelector = scaled;
-            Serial.write(STATE_CMD_WAVEFORM_BASE + scaled);
             DEBUG_PRINT(F("WAV="));DEBUG_PRINTLN(scaled);
         }
     }
 }
 
-
-void ui_poti_read_all() {
-    ui_poti_read_vol();
-    ui_poti_read_pitch();
-    ui_poti_read_register();
-    ui_poti_read_waveform();
-}
-
 void ui_initialize() {
     HW_LED_RED_ON; // muted state at power-cycle.
-    ui_poti_read_all();
+    ui_potis_read_all(true);
 }
 
 void ui_button_action() {
@@ -191,7 +179,7 @@ void ui_do_loop() {
         }
     }
     ui_button_action();
-    ui_poti_read_all();
+    ui_potis_read_all();
 }
 
 
