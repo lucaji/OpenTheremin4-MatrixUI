@@ -101,6 +101,7 @@ void ui_poti_read_all() {
 }
 
 void ui_initialize() {
+    HW_LED_RED_ON; // muted state at power-cycle.
     ui_poti_read_all();
 }
 
