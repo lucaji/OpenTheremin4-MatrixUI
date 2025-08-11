@@ -466,13 +466,22 @@ void HT1635::print_string5(const char* str) {
 	delay(1);
 }
 
+static bool shall_redraw = false;
+
 void HT1635::render_pitch_and_drift(float freq, float concert_ref_a, float min_valid_freq) {
 	if (freq < min_valid_freq) {
 		print_string5("-    ");
+		shall_redraw = true;
 		return;
 	}
 
 	if (_tuner_view_mode == HT1635::tuner_view_mode_t::piano_view) {
+		if (shall_redraw) {
+			// render the background piano bitmap if it was cleared previously
+			// in case of invalid frequency.
+			display_keyboard();
+			shall_redraw = false;
+		}
 		display_keyboard_drift(freq, concert_ref_a);
 		return;
 	}
